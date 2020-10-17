@@ -1,4 +1,4 @@
-"""Captcha Cog, verifies members upon joining the guild with a captcha."""
+"""Verification Cog, verifies members upon joining the guild with a captcha."""
 
 import asyncio
 import json
@@ -10,7 +10,7 @@ import discord
 from discord.ext import commands
 
 
-class Captcha(commands.Cog):
+class Verification(commands.Cog):
     """Helps verify members."""
     def __init__(self, bot):
         self.bot = bot
@@ -180,5 +180,5 @@ class Captcha(commands.Cog):
 
 
 def setup(bot):
-    """Adds the Captcha cog to the bot."""
-    bot.add_cog(Captcha(bot))
+    """Adds the Verification cog to the bot."""
+    bot.add_cog(Verification(bot))

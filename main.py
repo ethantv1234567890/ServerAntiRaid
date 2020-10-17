@@ -19,6 +19,9 @@ async def get_prefix(bot_, message):
     return commands.when_mentioned_or(*prefixes)(bot_, message)
 
 bot = commands.Bot(command_prefix=get_prefix, case_insensitive=True)
+bot.remove_command('help')
+
+blue = discord.Color.blue()
 
 
 @bot.event
@@ -47,9 +50,9 @@ async def on_command_error(ctx, error):
         pass
     elif isinstance(error, commands.NoPrivateMessage):
         await ctx.send('Commands will not work in DMs! Please use a guild!')
-    elif isinstance(error, commands.MissingPermissions):
+    elif isinstance(error, commands.BotMissingPermissions):
         await ctx.send('Sorry, I do not have administrator permission!')
-    elif isinstance(error, commands.CheckFailure):
+    elif isinstance(error, commands.MissingPermissions):
         await ctx.send('You are not allowed to use this bot! Shoo!')
     elif isinstance(error, commands.CommandOnCooldown):
         seconds = round(error.retry_after, 1)
@@ -64,7 +67,8 @@ async def on_command_error(ctx, error):
 async def global_check(ctx):
     """Bot checks for permissions and the location of the message."""
     # check for bot permissions
-    bot_perms = commands.bot_has_guild_permissions(administrator=True)
+    bot_perms = await commands.bot_has_guild_permissions(
+        administrator=True).predicate(ctx)
 
     # check if command is the Captcha command
     captcha_command = ctx.command.name == 'captcha'
@@ -86,16 +90,82 @@ async def global_check(ctx):
                 mod_role = options[guild_key]['mod_role']
                 mod_role = ctx.guild.get_role(mod_role)
 
-            mod_only = mod_role in author.roles or author == ctx.guild.owner
+            admin_perms = await commands.has_guild_permissions(
+                administrator=True).predicate(ctx)
+            mod_only = mod_role in author.roles or admin_perms
         else:
             mod_only = False
 
         return bot_perms and guild_only and mod_only
     return bot_perms
 
-bot.load_extension('cogs.captcha_')
+bot.load_extension('cogs.verification')
 bot.load_extension('cogs.lockdown')
 bot.load_extension('cogs.moderation')
 bot.load_extension('cogs.options')
+
+
+@bot.command(name='help')
+async def help_(ctx, command=None):
+    """More elaborate help command than the default help command."""
+    cog_dict = {cog.lower(): bot.cogs[cog] for cog in bot.cogs}
+    cmd_dict = {cmd.name.lower(): cmd.help for cmd in bot.commands}
+
+    if not command:
+        # General help command, includes list of cogs & commands
+        help_title = 'Server Anti-Raid Help'
+        help_description = 'Thank you for using the bot!'
+    elif command.lower() in cog_dict:
+        # Cogs
+        help_title = command.upper()
+        help_description = cog_dict[command.lower()].description
+    elif command.lower() in cmd_dict:
+        # Commands
+        help_title = command.upper()
+        help_description = cmd_dict[command.lower()]
+
+    help_embed = discord.Embed(
+        title=help_title,
+        description=help_description,
+        color=blue
+    )
+    help_embed.set_footer(
+        text='Do `.help <cog or command>` for more information!'
+    )
+
+    if not command:
+        help_embed.add_field(
+            name='Verification',
+            value='`captcha` `verify`',
+            inline=False
+        )
+        help_embed.add_field(
+            name='Lockdown',
+            value='`check` `lock` `lockall` `revoke` `slowmode` `unlock` ' +
+            '`unlockall`',
+            inline=False
+        )
+        help_embed.add_field(
+            name='Moderation',
+            value='`ban` `bans` `clearwarn` `kick` `mute` `unban` `unmute` ' +
+            '`warn` `warnings`',
+            inline=False
+        )
+        help_embed.add_field(
+            name='Options',
+            value='`settings`',
+            inline=False
+        )   
+    elif command is not None and command.lower() in cog_dict:
+        cmds = cog_dict[command.lower()].get_commands()
+
+        for cmd in cmds:
+            help_embed.add_field(
+                name=cmd.name.upper(),
+                value=cmd.help,
+                inline=False
+            )
+
+    await ctx.send(embed=help_embed)
 
 bot.run('TOKEN HERE')

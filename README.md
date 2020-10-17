@@ -21,22 +21,7 @@ To get started, a few things must be installed.
 
 2. Download the necessary packages for the project. We will be installing [discord.py](https://pypi.org/project/discord.py/) and [captcha.py](https://pypi.org/project/captcha/). Open *Command Prompt* on your computer and type in `pip install discord` and `pip install captcha`.
 
-3. Create a `main.py` file in the root directory. In the root directory, create two folders titled `cogs` and `data`. In the `cogs` folder, create 4 files: `captcha_.py`, `lockdown.py`, `moderation.py`, and `options.py`. In the `data` folder, create 4 files: `channels.json`, `mutes.json`, `options.json`, and `warns.json`. The directory should look something like this:
-
-```
-📦ServerAntiRaid
- ┣ 📂cogs
- ┣ ┣📜captcha_.py
- ┣ ┣📜lockdown.py
- ┣ ┣📜moderation.py
- ┣ ┗📜options.py
- ┣ 📂data
- ┣ ┣📜channels.json
- ┣ ┣📜mutes.json
- ┣ ┣📜options.json
- ┣ ┗📜warns.json
- ┗ 📜main.py
-```
+3. Clone the GitHub repository (either using the web URLs, GitHub Desktop, or downloading the zipped file).
 
 ## Creating and Inviting the Bot
 
@@ -52,7 +37,7 @@ To get started, a few things must be installed.
 
 ---
 
-With those steps done, you are ready to get coding! However, please note that in `main.py`, the second to last line is shown below.
+With those steps done, you are almost ready to go! However, please note that in `main.py`, the second to last line is shown below.
 
 > bot.run('TOKEN HERE')
 
