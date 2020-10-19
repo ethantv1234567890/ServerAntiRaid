@@ -22,7 +22,7 @@ class Moderation(commands.Cog):
         if guild_key not in options:
             options[guild_key] = {
                 'prefix': '.',
-                'captcha': True,
+                'captcha': False,
                 'public_log': None,
                 'private_log': None,
                 'mod_role': None,
@@ -47,7 +47,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def warn(self, ctx, member: discord.Member, *, reason='No reason.'):
-        """Issues a warn to a user."""
+        """
+        Issues a warn to a user.
+
+        **Example:** `.warn @ACPlayGames being bad`
+        """
         await ctx.message.delete()
 
         # add warn to user
@@ -101,7 +105,7 @@ class Moderation(commands.Cog):
 
         if options[guild_key]['public_log']:
             channel = options[guild_key]['public_log']
-            if channel is not None:
+            if channel:
                 channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel
@@ -111,7 +115,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def warnings(self, ctx, member: discord.Member):
-        """Lists the warnings that the user has."""
+        """
+        Lists the warnings that the user has.
+
+        **Example:** `.warnings @ACPlayGames`
+        """
         # gets the warns of the user & parses them
         with open('./data/warns.json', 'r') as warns_file:
             warns = json.load(warns_file)
@@ -151,7 +159,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def clearwarn(self, ctx, member: discord.Member, warn_id: int):
-        """Issues a warn to a user."""
+        """
+        Clears a warn from a user.
+
+        **Example:** `.clearwarn @ACPlayGames 1`
+        """
         await ctx.message.delete()
 
         with open('./data/warns.json', 'r') as warns_file:
@@ -177,7 +189,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def mute(self, ctx, member: discord.Member, *, reason='No reason.'):
-        """Mutes a user."""
+        """
+        Mutes a user.
+
+        **Example:** `.mute @ACPlayGames bad`
+        """
         await ctx.message.delete()
 
         # check for a Muted role, creates one if not found
@@ -254,7 +270,7 @@ class Moderation(commands.Cog):
         if guild_key in options:
             if options[guild_key]['public_log']:
                 channel = options[guild_key]['public_log']
-                if channel is not None:
+                if channel:
                     channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel
@@ -265,7 +281,11 @@ class Moderation(commands.Cog):
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def unmute(self, ctx, member: discord.Member, *,
                      reason='No reason.'):
-        """Unmutes a user."""
+        """
+        Unmutes a user.
+
+        **Example:** `.unmute @ACPlayGames good`
+        """
         await ctx.message.delete()
 
         # retrives the Muted role
@@ -280,7 +300,7 @@ class Moderation(commands.Cog):
         muted_role = options[guild_key]['muted_role']
         muted_role = ctx.guild.get_role(muted_role)
 
-        if muted_role is None:
+        if not muted_role:
             await ctx.send('No one has been muted before!')
             return
 
@@ -340,7 +360,7 @@ class Moderation(commands.Cog):
         if guild_key in options:
             if options[guild_key]['public_log']:
                 channel = options[guild_key]['public_log']
-                if channel is not None:
+                if channel:
                     channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel
@@ -350,7 +370,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def kick(self, ctx, member: discord.Member, *, reason='No reason.'):
-        """Removes a user from the current guild."""
+        """
+        Removes a user from the current guild.
+        
+        **Example:** `.kick @ACPlayGames annoying`
+        """
         await ctx.message.delete()
         await member.kick(reason=reason)
 
@@ -390,7 +414,7 @@ class Moderation(commands.Cog):
 
         if options[guild_key]['public_log']:
             channel = options[guild_key]['public_log']
-            if channel is not None:
+            if channel:
                 channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel
@@ -400,7 +424,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def ban(self, ctx, member: discord.Member, *, reason='No reason.'):
-        """Strikes a user with a guild-only ban hammer."""
+        """
+        Strikes a user with a ban hammer.
+
+        **Example:** `.ban @ACPlayGames raiding`
+        """
         await ctx.message.delete()
         await member.ban(reason=reason)
 
@@ -440,7 +468,7 @@ class Moderation(commands.Cog):
 
         if options[guild_key]['public_log']:
             channel = options[guild_key]['public_log']
-            if channel is not None:
+            if channel:
                 channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel
@@ -476,7 +504,11 @@ class Moderation(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def unban(self, ctx, user, *, reason='No reason.'):
-        """Reverses the effects of the ban hammer."""
+        """
+        Reverses the effects of the ban hammer.
+
+        **Example:** `.unban @ACPlayGames forgiven`
+        """
         # user ID is more accurate than name + discrim
         await ctx.message.delete()
 
@@ -493,10 +525,11 @@ class Moderation(commands.Cog):
                 if str(ban.user) == user:
                     member = ban.user
 
-        if member is not None:
+        if member:
             await ctx.guild.unban(member, reason=reason)
         else:
-            await ctx.send('Please provide a valid user!')
+            await ctx.send('Please provide a user ID or name + discrim!')
+            return
 
         # creating the embed message
         unban_embed = discord.Embed(
@@ -534,7 +567,7 @@ class Moderation(commands.Cog):
 
         if options[guild_key]['public_log']:
             channel = options[guild_key]['public_log']
-            if channel is not None:
+            if channel:
                 channel = ctx.guild.get_channel(channel)
 
         # sends the embed to the selected channel

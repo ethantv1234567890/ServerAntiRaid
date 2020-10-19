@@ -105,7 +105,11 @@ class Lockdown(commands.Cog):
 
     @commands.command()
     async def lock(self, ctx, channel: discord.TextChannel = None):
-        """Prevents users from talking in a text channel."""
+        """
+        Prevents users from talking in a text channel.
+
+        **Example:** `.lock #general`
+        """
         channel = channel or ctx.channel
         guild_key = str(ctx.guild.id)
         channel_key = str(channel.id)
@@ -123,7 +127,11 @@ class Lockdown(commands.Cog):
 
     @commands.command()
     async def unlock(self, ctx, channel: discord.TextChannel = None):
-        """Lifts the lock for a text channel."""
+        """
+        Lifts the lock for a text channel.
+
+        **Example:** `.unlock #general`
+        """
         channel = channel or ctx.channel
         guild_key = str(ctx.guild.id)
         channel_key = str(channel.id)
@@ -185,7 +193,11 @@ class Lockdown(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
     async def check(self, ctx, user: discord.User):
-        """Checks if a user is an alt."""
+        """
+        Checks if a user is an alt.
+
+        **Example:** `.check @ACPlayGames`
+        """
         if user.bot:
             await ctx.send('Please input a user, not a bot!')
         else:
@@ -216,7 +228,14 @@ class Lockdown(commands.Cog):
 
     @commands.command()
     async def revoke(self, ctx, inv):
-        """Revokes a specific invite (or all invites)."""
+        """
+        Revokes a specific invite (or all invites).
+
+        **Examples:**
+            `.revoke ka35JqY`
+            `.revoke discord.gg/ka35JqY`
+            `.revoke all`
+        """
         invites = await ctx.guild.invites()
         if inv == 'all':
             for invite in invites:
@@ -232,10 +251,14 @@ class Lockdown(commands.Cog):
             else:
                 await ctx.send('Invalid invite code!')
 
-    @commands.command
+    @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def purge(self, ctx, messages: int):
-        """Purges the current channel."""
+        """
+        Delete messages from the current channel.
+
+        **Example:** `.purge 100`
+        """
         if messages >= 1:
             await ctx.message.delete()
             await ctx.channel.purge(limit=messages)
@@ -250,7 +273,11 @@ class Lockdown(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def slowmode(self, ctx, seconds: int):
-        """Implements slowmode in the current channel."""
+        """
+        Implements slowmode in the current channel.
+
+        **Example:** `.slowmode 5`
+        """
         await ctx.message.delete()
         if 0 <= seconds <= 21600:
             await ctx.channel.edit(slowmode_delay=seconds)

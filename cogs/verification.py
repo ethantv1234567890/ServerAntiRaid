@@ -29,7 +29,7 @@ class Verification(commands.Cog):
         if guild_key not in options:
             options[guild_key] = {
                 'prefix': '.',
-                'captcha': True,
+                'captcha': False,
                 'public_log': None,
                 'private_log': None,
                 'mod_role': None,
@@ -44,6 +44,10 @@ class Verification(commands.Cog):
         """Creates, sends, and verifies a member with a captcha."""
         if member not in self.captcha_in_progress:
             guild = member.guild
+            guild_key = str(guild.id)
+            with open('./data/options.json', 'r') as options_file:
+                options = json.load(options_file)
+
             captcha_text = ''.join(random.choices(
                 string.ascii_letters + string.digits, k=5  # captcha length
             ))
@@ -60,14 +64,21 @@ class Verification(commands.Cog):
             )
             captcha_embed.set_image(url='attachment://captcha.png')
             captcha_embed.set_footer(text='Please type the text in the image!')
-            await member.send(file=captcha_file, embed=captcha_embed)
+            try:
+                await member.send(file=captcha_file, embed=captcha_embed)
+            except discord.Forbidden:  # not allowed to DM
+                # sends msg to moderators, does nothing if it cannot find them
+                if guild_key in options:
+                    private_log = options[guild_key]['private_log']
+                    if private_log:
+                        private_log = guild.get_channel(private_log)
+                        await private_log.send(
+                            f'Sorry, I cannot DM and verify **{member}**!'
+                        )
+                return
 
             def check_captcha(msg):
                 return msg.content == captcha_text and msg.author == member
-
-            guild_key = str(guild.id)
-            with open('./data/options.json', 'r') as options_file:
-                options = json.load(options_file)
 
             try:
                 self.captcha_in_progress.append(member)
@@ -79,27 +90,13 @@ class Verification(commands.Cog):
             except asyncio.TimeoutError:  # ran out of time
                 self.captcha_in_progress.remove(member)
                 await member.send('Captcha expired! Please do `.captcha`!')
-            except discord.Forbidden:  # not allowed to DM
-                # sends msg to moderators, does nothing if it cannot find them
-                self.captcha_in_progress.remove(member)
-                if guild_key in options:
-                    private_log = options[guild_key]['private_log']
-                    if private_log is not None:
-                        private_log = guild.get_channel(private_log)
-                        await private_log.send(
-                            f'Sorry, I cannot DM and verify **{member}**!'
-                        )
-                    else:
-                        pass
-                else:
-                    pass
             else:  # captcha solved
                 self.captcha_in_progress.remove(member)
                 # checks for Member role, gives to user if it exists
                 await self.add_guild(guild)
 
                 member_role = options[guild_key]['member_role']
-                if member_role is not None:
+                if member_role:
                     member_role = guild.get_role(member_role)
                     await member.add_roles(
                         member_role,
@@ -125,14 +122,18 @@ class Verification(commands.Cog):
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.user)
     async def captcha(self, ctx, guild_id: int = None):
-        """DMs captcha to the user for verification."""
-        if ctx.guild is not None:  # command is in guild
+        """
+        DMs captcha to the user for verification. (Can be done in DMs!)
+
+        **Example:** `.captcha 336991423213862913`
+        """
+        if ctx.guild:  # command is in guild
             guild = ctx.guild
             member = ctx.author
         else:  # command is in DMs
-            if guild_id is not None:  # guild ID is provided
+            if guild_id:  # guild ID is provided
                 guild = self.bot.get_guild(guild_id)
-                if guild is not None:  # a valid guild has been provided
+                if guild:  # a valid guild has been provided
                     member = guild.get_member(ctx.author.id)
                 else:  # invalid guild
                     await ctx.send('Please provide a valid guild ID!')
@@ -149,14 +150,19 @@ class Verification(commands.Cog):
         await self.add_guild(guild)
 
         if not options[guild_key]['captcha']:  # "captcha" disabled
+            await ctx.send('Sorry, this guild does not have captcha enabled!')
             return
 
         await self.verify_captcha(member)
 
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
-    async def verify(self, ctx, member: discord.Member):
-        """For moderators only, manually verify a user without captcha."""
+    async def verify(self, ctx, member: discord.Member = None):
+        """
+        For moderators only, manually verify a user without captcha.
+
+        **Example:** `.verify @ACPlayGames`
+        """
         # checks if the "captcha" option is enabled for the guild
         guild_key = str(ctx.guild.id)
         with open('./data/options.json', 'r') as options_file:
@@ -165,18 +171,24 @@ class Verification(commands.Cog):
         await self.add_guild(ctx.guild)
 
         if options[guild_key]['captcha']:  # "captcha" enabled
+            if not member:
+                await ctx.send('Please provide a member!')
+                return
+
             member_role = options[guild_key]['member_role']
-            if member_role is not None:
+            if member_role:
                 member_role = ctx.guild.get_role(member_role)
                 await member.add_roles(
                     member_role,
                     reason='Manually Verified!'
                 )
-                await member.send(f'Verified! Welcome to **{ctx.guild}**!')
+                await ctx.send(f'Successfully verified {member}!')
             else:
                 await ctx.send(
                     'Sorry, there is no member role for this guild!'
                 )
+        else:
+            await ctx.send('Sorry, this guild does not have captcha enabled!')
 
 
 def setup(bot):

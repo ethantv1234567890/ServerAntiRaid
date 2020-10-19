@@ -66,38 +66,36 @@ async def on_command_error(ctx, error):
 @bot.check
 async def global_check(ctx):
     """Bot checks for permissions and the location of the message."""
-    # check for bot permissions
-    bot_perms = await commands.bot_has_guild_permissions(
-        administrator=True).predicate(ctx)
-
     # check if command is the Captcha command
     captcha_command = ctx.command.name == 'captcha'
 
-    if not captcha_command:
-        # check if command is not in DMs
-        guild_only = await commands.guild_only().predicate(ctx)
+    if captcha_command:
+        return True
 
-        # check for user permissions in guild
-        author = ctx.author
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
+    # check if command is in DMs
+    guild_only = await commands.guild_only().predicate(ctx)
 
-        if guild_only:
-            guild_key = str(ctx.guild.id)
-            if guild_key not in options:
-                mod_role = None
-            else:
-                mod_role = options[guild_key]['mod_role']
-                mod_role = ctx.guild.get_role(mod_role)
+    # check for bot permissions in guild
+    bot_perms = await commands.bot_has_guild_permissions(
+        administrator=True).predicate(ctx)
 
-            admin_perms = await commands.has_guild_permissions(
-                administrator=True).predicate(ctx)
-            mod_only = mod_role in author.roles or admin_perms
-        else:
-            mod_only = False
+    # check for user permissions in guild
+    author = ctx.author
+    with open('./data/options.json', 'r') as options_file:
+        options = json.load(options_file)
 
-        return bot_perms and guild_only and mod_only
-    return bot_perms
+    guild_key = str(ctx.guild.id)
+    if guild_key not in options:
+        mod_role = None
+    else:
+        mod_role = options[guild_key]['mod_role']
+        mod_role = ctx.guild.get_role(mod_role)
+
+    admin_perms = await commands.has_guild_permissions(
+        administrator=True).predicate(ctx)
+    mod_only = mod_role in author.roles or admin_perms
+
+    return bot_perms and guild_only and mod_only
 
 bot.load_extension('cogs.verification')
 bot.load_extension('cogs.lockdown')
@@ -141,21 +139,21 @@ async def help_(ctx, command=None):
         )
         help_embed.add_field(
             name='Lockdown',
-            value='`check` `lock` `lockall` `revoke` `slowmode` `unlock` ' +
-            '`unlockall`',
+            value='`lock` `unlock` `lockall` `unlockall` `check` `revoke` ' +
+            '`purge` `slowmode`',
             inline=False
         )
         help_embed.add_field(
             name='Moderation',
-            value='`ban` `bans` `clearwarn` `kick` `mute` `unban` `unmute` ' +
-            '`warn` `warnings`',
+            value='`warn` `warnings` `clearwarn` `mute` `unmute` `kick` ' +
+            '`ban` `bans `unban`',
             inline=False
         )
         help_embed.add_field(
             name='Options',
             value='`settings`',
             inline=False
-        )   
+        )
     elif command is not None and command.lower() in cog_dict:
         cmds = cog_dict[command.lower()].get_commands()
 

@@ -42,7 +42,7 @@ class Options(commands.Cog):
         if guild_key not in options:
             options[guild_key] = {
                 'prefix': '.',
-                'captcha': True,
+                'captcha': False,
                 'public_log': None,
                 'private_log': None,
                 'mod_role': None,
@@ -124,7 +124,7 @@ class Options(commands.Cog):
             )
 
         # Checking the channels and sending it
-        if guild.public_updates_channel is not None:
+        if guild.public_updates_channel:
             await guild.public_updates_channel.send(embed=welcome_embed)
         else:
             for text_channel in guild.text_channels:
@@ -144,7 +144,7 @@ class Options(commands.Cog):
     @commands.cooldown(1, 1, commands.BucketType.guild)
     async def settings(self, ctx, option=None, new_option=None):
         """Configure customizable settings."""
-        if option is None:  # sends info about all the options
+        if not option:  # sends info about all the options
             prefix = await self.get_prefix(ctx.message)
             settings_embed = discord.Embed(
                 title='Customizable Settings',
@@ -198,9 +198,9 @@ class Options(commands.Cog):
             with open('./data/options.json', 'r') as options_file:
                 options = json.load(options_file)
 
-            if new_option is None:  # sends info about selected option
+            if not new_option:  # sends info about selected option
                 current_value = options[guild_key][option]
-                if current_value is not None:
+                if current_value:
                     if option in ('public_log', 'private_log'):
                         current_value = ctx.guild.get_channel(current_value)
                         current_value = current_value.mention
