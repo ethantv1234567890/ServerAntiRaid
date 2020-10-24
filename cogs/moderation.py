@@ -11,38 +11,18 @@ class Moderation(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.blue = discord.Color.blue()
-
-    async def add_guild(self, guild):
-        """If the guild options does not exist, add it to the dictionary."""
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        guild_key = str(guild.id)
-
-        if guild_key not in options:
-            options[guild_key] = {
-                'prefix': '.',
-                'captcha': False,
-                'public_log': None,
-                'private_log': None,
-                'mod_role': None,
-                'muted_role': None,
-                'member_role': None
-            }  # append default values
-
-        with open('./data/options.json', 'w') as options_file:
-            json.dump(options, options_file, indent=2)
+        self.user_conv = commands.UserConverter()
 
     async def create_muted_role(self, guild):
         """Create a role that denies permission to send messages."""
-        role = await guild.create_role(
+        muted_role = await guild.create_role(
             name='Muted',
             color=discord.Color.light_gray(),
             hoist=True,
             mentionable=True,
             reason='No muted role detected, so I automatically created one!'
         )
-        return role
+        return muted_role
 
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
@@ -70,7 +50,23 @@ class Moderation(commands.Cog):
         with open('./data/warns.json', 'w') as warns_file:
             json.dump(warns, warns_file, indent=2)
 
-        # creating the embed message
+        await ctx.send(f'**{member}** has been warned!')
+
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         warn_embed = discord.Embed(
             title='Warning',
             description='Warns a user for their misconducts!',
@@ -96,20 +92,6 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        channel = ctx.channel
-        await self.add_guild(ctx.guild)
-
-        if options[guild_key]['public_log']:
-            channel = options[guild_key]['public_log']
-            if channel:
-                channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been warned!')
         await channel.send(embed=warn_embed)
 
     @commands.command()
@@ -203,11 +185,19 @@ class Moderation(commands.Cog):
         guild_key = str(ctx.guild.id)
         member_key = str(member.id)
 
-        await self.add_guild(ctx.guild)
-
-        muted_role = options[guild_key]['muted_role']
-        muted_role = ctx.guild.get_role(muted_role)
-        muted_role = muted_role or await self.create_muted_role(ctx.guild)
+        if guild_key in options:
+            muted_role = options[guild_key]['muted_role']
+            muted_role = ctx.guild.get_role(muted_role)
+            muted_role = muted_role or await self.create_muted_role(ctx.guild)
+        else:
+            muted_role = await self.create_muted_role(ctx.guild)
+            options[guild_key] = {
+                'prefix': '.',
+                'public_log': None,
+                'private_log': None,
+                'mod_role': None,
+                'muted_role': None
+            }  # append default values
 
         options[guild_key]['muted_role'] = muted_role.id
 
@@ -228,15 +218,30 @@ class Moderation(commands.Cog):
             await ctx.send('This person is already muted!')
             return
 
+        await member.edit(roles=[muted_role], reason='Muted')
+
+        await ctx.send(f'**{member}** has been muted!')
+
         mutes[guild_key][member_key] = [role.id for role in roles]
 
         with open('./data/mutes.json', 'w') as mutes_file:
             json.dump(mutes, mutes_file, indent=2)
 
-        await member.remove_roles(*roles, reason='Muted')
-        await member.add_roles(muted_role, reason='Muted')
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
 
-        # creating the embed message
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         mute_embed = discord.Embed(
             title='Mute',
             description='Mutes a user for their misconducts!',
@@ -262,19 +267,6 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        channel = ctx.channel
-        if guild_key in options:
-            if options[guild_key]['public_log']:
-                channel = options[guild_key]['public_log']
-                if channel:
-                    channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been muted!')
         await channel.send(embed=mute_embed)
 
     @commands.command()
@@ -288,21 +280,8 @@ class Moderation(commands.Cog):
         """
         await ctx.message.delete()
 
-        # retrives the Muted role
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
         guild_key = str(ctx.guild.id)
         member_key = str(member.id)
-
-        await self.add_guild(ctx.guild)
-
-        muted_role = options[guild_key]['muted_role']
-        muted_role = ctx.guild.get_role(muted_role)
-
-        if not muted_role:
-            await ctx.send('No one has been muted before!')
-            return
 
         # removes Muted role, returns original roles
         with open('./data/mutes.json', 'r') as mutes_file:
@@ -323,13 +302,28 @@ class Moderation(commands.Cog):
         with open('./data/mutes.json', 'w') as mutes_file:
             json.dump(mutes, mutes_file, indent=2)
 
-        await member.remove_roles(muted_role, reason='Unmuted')
-        await member.add_roles(*roles, reason='Unmuted')
+        await member.edit(roles=roles, reason='Unmuted')
 
-        # creating the embed message
+        await ctx.send(f'**{member}** has been unmuted!')
+
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         unmute_embed = discord.Embed(
             title='Unmute',
-            description='Unmutes a user for serving their punishments!',
+            description='Unmutes a user for serving their sentence!',
             color=self.blue
         )
         unmute_embed.set_author(
@@ -352,19 +346,6 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        channel = ctx.channel
-        if guild_key in options:
-            if options[guild_key]['public_log']:
-                channel = options[guild_key]['public_log']
-                if channel:
-                    channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been unmuted!')
         await channel.send(embed=unmute_embed)
 
     @commands.command()
@@ -372,16 +353,34 @@ class Moderation(commands.Cog):
     async def kick(self, ctx, member: discord.Member, *, reason='No reason.'):
         """
         Removes a user from the current guild.
-        
+
         **Example:** `.kick @ACPlayGames annoying`
         """
         await ctx.message.delete()
         await member.kick(reason=reason)
 
-        # creating the embed message
+        await ctx.send(f'**{member}** has been kicked!')
+
+        guild_key = str(ctx.guild.id)
+
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         kick_embed = discord.Embed(
             title='Kick',
-            description='YEET! Bye!',
+            description='Goodbye!',
             color=self.blue
         )
         kick_embed.set_author(
@@ -404,35 +403,44 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        guild_key = str(ctx.guild.id)
-        channel = ctx.channel
-        await self.add_guild(ctx.guild)
-
-        if options[guild_key]['public_log']:
-            channel = options[guild_key]['public_log']
-            if channel:
-                channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been kicked!')
         await channel.send(embed=kick_embed)
 
     @commands.command()
     @commands.cooldown(1, 1, commands.BucketType.member)
-    async def ban(self, ctx, member: discord.Member, *, reason='No reason.'):
+    async def ban(self, ctx, user, *, reason='No reason.'):
         """
         Strikes a user with a ban hammer.
 
         **Example:** `.ban @ACPlayGames raiding`
         """
         await ctx.message.delete()
-        await member.ban(reason=reason)
 
-        # creating the embed message
+        try:
+            member = await self.user_conv.convert(ctx, user)
+        except commands.UserNotFound:
+            await ctx.send('Please provide a valid user!')
+            return
+
+        await ctx.guild.ban(member, reason=reason)
+        await ctx.send(f'**{member}** has been banned!')
+
+        guild_key = str(ctx.guild.id)
+
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         ban_embed = discord.Embed(
             title='Ban',
             description='Goodbye forever, loser!',
@@ -458,21 +466,6 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        guild_key = str(ctx.guild.id)
-        channel = ctx.channel
-        await self.add_guild(ctx.guild)
-
-        if options[guild_key]['public_log']:
-            channel = options[guild_key]['public_log']
-            if channel:
-                channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been banned!')
         await channel.send(embed=ban_embed)
 
     @commands.command()
@@ -509,29 +502,34 @@ class Moderation(commands.Cog):
 
         **Example:** `.unban @ACPlayGames forgiven`
         """
-        # user ID is more accurate than name + discrim
         await ctx.message.delete()
 
-        member = None
-
-        # integer passed in, checks if it is a valid user ID
-        if user.isnumeric():
-            member = await self.bot.fetch_user(user)
-
-        # not an integer, check if it is a valid name + discrim combination
-        else:
-            bans = await ctx.guild.bans()
-            for ban in bans:
-                if str(ban.user) == user:
-                    member = ban.user
-
-        if member:
-            await ctx.guild.unban(member, reason=reason)
-        else:
-            await ctx.send('Please provide a user ID or name + discrim!')
+        try:
+            member = await self.user_conv.convert(ctx, user)
+        except commands.UserNotFound:
+            await ctx.send('Please provide a valid user!')
             return
 
-        # creating the embed message
+        await ctx.guild.unban(member, reason=reason)
+        await ctx.send(f'**{member}** has been unbanned!')
+
+        guild_key = str(ctx.guild.id)
+
+        # check for the public_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['public_log']
+
+        if not channel:
+            return
+
+        channel = ctx.guild.get_channel(channel)
+
+        # creating & sending the embed message
         unban_embed = discord.Embed(
             title='Unban',
             description='Welcome back! Perhaps I treated you too harshly.',
@@ -557,21 +555,6 @@ class Moderation(commands.Cog):
             inline=False
         )
 
-        # deciding where to send the embed
-        with open('./data/options.json', 'r') as options_file:
-            options = json.load(options_file)
-
-        guild_key = str(ctx.guild.id)
-        channel = ctx.channel
-        await self.add_guild(ctx.guild)
-
-        if options[guild_key]['public_log']:
-            channel = options[guild_key]['public_log']
-            if channel:
-                channel = ctx.guild.get_channel(channel)
-
-        # sends the embed to the selected channel
-        await ctx.send(f'**{member}** has been unbanned!')
         await channel.send(embed=unban_embed)
 
 

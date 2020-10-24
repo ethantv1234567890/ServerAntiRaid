@@ -1,6 +1,6 @@
 # ServerAntiRaid
  
-**Server Anti-Raid, developed by ACPlayGames!**
+**Server Anti-Raid, developed by ACPlayGames! Small moderation bot made for fun.**
 
 **NOTE: This is not recommended for beginners. Please learn the basics of Python before attempting to use this code!**
 
@@ -19,7 +19,7 @@ To get started, a few things must be installed.
 
 1. Download [Python](https://www.python.org/downloads/). **Please make sure to check the "*Add Python to PATH*" option!**
 
-2. Download the necessary packages for the project. We will be installing [discord.py](https://pypi.org/project/discord.py/) and [captcha.py](https://pypi.org/project/captcha/). Open *Command Prompt* on your computer and type in `pip install discord` and `pip install captcha`.
+2. We will be installing [discord.py](https://pypi.org/project/discord.py/) for this project. Open *Command Prompt* on your computer and type in `pip install discord`.
 
 3. Clone the GitHub repository (either using the web URLs, GitHub Desktop, or downloading the zipped file).
 

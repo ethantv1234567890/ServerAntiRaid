@@ -13,24 +13,13 @@ class Options(commands.Cog):
         self.blue = discord.Color.blue()
         self.accepted_values = {
             'prefix': 'Anything',
-            'captcha': '`True` or `False`',
             'public_log': 'Any text channel',
             'private_log': 'Any text channel',
             'mod_role': 'Any role',
-            'muted_role': 'Any role',
-            'member_role': 'Any role'
+            'muted_role': 'Any role'
         }  # text used for an embed
         self.tc_conv = commands.TextChannelConverter()
         self.role_conv = commands.RoleConverter()
-
-    async def get_prefix(self, message):
-        """Returns the appropriate prefix for the bot."""
-        with open('./data/options.json', 'r') as options_file:
-            options_dict = json.load(options_file)
-
-        if message.guild and str(message.guild.id) in options_dict:
-            return options_dict[str(message.guild.id)]['prefix']
-        return '.'
 
     async def add_guild(self, guild):
         """If the guild options does not exist, add it to the dictionary."""
@@ -42,12 +31,10 @@ class Options(commands.Cog):
         if guild_key not in options:
             options[guild_key] = {
                 'prefix': '.',
-                'captcha': False,
                 'public_log': None,
                 'private_log': None,
                 'mod_role': None,
-                'muted_role': None,
-                'member_role': None
+                'muted_role': None
             }  # append default values
 
         with open('./data/options.json', 'w') as options_file:
@@ -64,34 +51,20 @@ class Options(commands.Cog):
         if option == 'prefix':
             options[guild_key]['prefix'] = new_option
 
-        # Boolean
-        elif option == 'captcha':
-            if new_option.lower() in ('true', 'yes', 'on'):
-                options[guild_key][option] = True
-            elif new_option.lower() in ('false', 'no', 'off'):
-                options[guild_key][option] = False
-            else:
-                raise commands.errors.BadArgument(
-                    message='Invalid response! Use `True` or `False`!'
-                )
-
         # discord.TextChannel
         elif option in ('public_log', 'private_log'):
             text_channel = await self.tc_conv.convert(ctx, new_option)
             options[guild_key][option] = text_channel.id
 
         # discord.Role
-        elif option in ('mod_role', 'muted_role', 'member_role'):
+        elif option in ('mod_role', 'muted_role'):
             role = await self.role_conv.convert(ctx, new_option)
             options[guild_key][option] = role.id
 
         with open('./data/options.json', 'w') as options_file:
             json.dump(options, options_file, indent=2)
 
-        await ctx.send(
-            f'**{option}** is now **{new_option}**',
-            allowed_mentions=discord.AllowedMentions(roles=False)
-        )
+        await ctx.send(f'**{option}** is now **{new_option}**')
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -145,10 +118,9 @@ class Options(commands.Cog):
     async def settings(self, ctx, option=None, new_option=None):
         """Configure customizable settings."""
         if not option:  # sends info about all the options
-            prefix = await self.get_prefix(ctx.message)
             settings_embed = discord.Embed(
                 title='Customizable Settings',
-                description=f'Run `{prefix}settings <option> <new_option>`!',
+                description='Run `.settings <option> <new_option>`!',
                 color=self.blue
             )
             settings_embed.add_field(
@@ -157,18 +129,13 @@ class Options(commands.Cog):
                 inline=False
             )
             settings_embed.add_field(
-                name='captcha',
-                value='Toggles the captcha feature upon member join.',
-                inline=False
-            )
-            settings_embed.add_field(
                 name='public_log',
-                value='Selects public channel (warns, mutes, kicks, bans).',
+                value='Selects public log (warns, mutes, kicks, bans).',
                 inline=False
             )
             settings_embed.add_field(
                 name='private_log',
-                value='Selects private channel (important information).',
+                value='Selects private log (deleted & edited messages).',
                 inline=False
             )
             settings_embed.add_field(
@@ -181,15 +148,9 @@ class Options(commands.Cog):
                 value='Selects mute role to be given to muted users.',
                 inline=False
             )
-            settings_embed.add_field(
-                name='member_role',
-                value='Selects the Membership role for verified users.',
-                inline=False
-            )
             await ctx.send(embed=settings_embed)
         elif option.lower() in (
-            'prefix', 'captcha', 'public_log', 'private_log',
-            'mod_role', 'muted_role', 'member_role'
+            'prefix', 'public_log', 'private_log', 'mod_role', 'muted_role'
         ):
             option = option.lower()
             guild_key = str(ctx.guild.id)
@@ -204,7 +165,7 @@ class Options(commands.Cog):
                     if option in ('public_log', 'private_log'):
                         current_value = ctx.guild.get_channel(current_value)
                         current_value = current_value.mention
-                    elif option in ('mod_role', 'muted_role', 'member_role'):
+                    elif option in ('mod_role', 'muted_role'):
                         current_value = ctx.guild.get_role(current_value)
                         current_value = current_value.mention
 

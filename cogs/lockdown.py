@@ -227,31 +227,6 @@ class Lockdown(commands.Cog):
             await ctx.send(embed=alt_embed)
 
     @commands.command()
-    async def revoke(self, ctx, inv):
-        """
-        Revokes a specific invite (or all invites).
-
-        **Examples:**
-            `.revoke ka35JqY`
-            `.revoke discord.gg/ka35JqY`
-            `.revoke all`
-        """
-        invites = await ctx.guild.invites()
-        if inv == 'all':
-            for invite in invites:
-                await invite.delete()
-            await ctx.send('Revoked all guild invite links!')
-        else:
-            for invite in invites:
-                if inv in (invite.url, invite.code):
-                    await invite.delete()
-                    await ctx.send(f'Revoked the `{invite.code}` invite!')
-                    break
-                continue
-            else:
-                await ctx.send('Invalid invite code!')
-
-    @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)
     async def purge(self, ctx, messages: int):
         """

@@ -66,12 +66,6 @@ async def on_command_error(ctx, error):
 @bot.check
 async def global_check(ctx):
     """Bot checks for permissions and the location of the message."""
-    # check if command is the Captcha command
-    captcha_command = ctx.command.name == 'captcha'
-
-    if captcha_command:
-        return True
-
     # check if command is in DMs
     guild_only = await commands.guild_only().predicate(ctx)
 
@@ -97,8 +91,8 @@ async def global_check(ctx):
 
     return bot_perms and guild_only and mod_only
 
-bot.load_extension('cogs.verification')
 bot.load_extension('cogs.lockdown')
+bot.load_extension('cogs.logs')
 bot.load_extension('cogs.moderation')
 bot.load_extension('cogs.options')
 
@@ -133,20 +127,15 @@ async def help_(ctx, command=None):
 
     if not command:
         help_embed.add_field(
-            name='Verification',
-            value='`captcha` `verify`',
-            inline=False
-        )
-        help_embed.add_field(
             name='Lockdown',
-            value='`lock` `unlock` `lockall` `unlockall` `check` `revoke` ' +
-            '`purge` `slowmode`',
+            value='`lock` `unlock` `lockall` `unlockall` `check` `purge` ' +
+            '`slowmode`',
             inline=False
         )
         help_embed.add_field(
             name='Moderation',
             value='`warn` `warnings` `clearwarn` `mute` `unmute` `kick` ' +
-            '`ban` `bans `unban`',
+            '`ban` `bans` `unban`',
             inline=False
         )
         help_embed.add_field(
