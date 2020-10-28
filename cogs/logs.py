@@ -207,9 +207,12 @@ class Logs(commands.Cog):
                 inline=False
             )
             check_embed.add_field(
-                name='Score (1 through 5)',
+                name='Score (0 through 5)',
                 value=user_score,
                 inline=False
+            )
+            check_embed.set_footer(
+                text='0-1: safe; 2-3: caution; 4-5: alt'
             )
 
             await channel.send(embed=check_embed)
