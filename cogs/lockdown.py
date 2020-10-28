@@ -1,7 +1,6 @@
 """Lockdown Cog, commands executed by the moderator to combat a raid."""
 
 import asyncio
-from datetime import datetime
 import json
 
 import discord
@@ -80,28 +79,6 @@ class Lockdown(commands.Cog):
 
         # Unlocks channel
         await channel.edit(overwrites=new_ow)
-
-    async def is_alt(self, user: discord.User):
-        """
-        Algorithm that checks if a user is an alt.
-
-        Uses a points system from 0 to 5.
-        A score of 0-1 means the user is very unlikely to be an alt.
-        A score of 2-3 means the user may or may not be an alt.
-        A score of 4-5 means the user is very likely to be an alt.
-        """
-        score = 0
-
-        age = datetime.utcnow() - user.created_at
-
-        if age.days <= 7:  # created within a week ago
-            score += 3
-        if user.avatar is None:  # default avatar
-            score += 1
-        if not user.public_flags.all():
-            score += 1
-
-        return score
 
     @commands.command()
     async def lock(self, ctx, channel: discord.TextChannel = None):
@@ -189,42 +166,6 @@ class Lockdown(commands.Cog):
             await self.unlock_channel(channel)
             await ctx.send(f'{channel.mention} has been unlocked!')
             await asyncio.sleep(1)
-
-    @commands.command()
-    @commands.cooldown(1, 1, commands.BucketType.member)
-    async def check(self, ctx, user: discord.User):
-        """
-        Checks if a user is an alt.
-
-        **Example:** `.check @ACPlayGames`
-        """
-        if user.bot:
-            await ctx.send('Please input a user, not a bot!')
-        else:
-            user_score = await self.is_alt(user)
-            alt_footer = 'Check if the user has Nitro or Connected Accounts!'
-
-            if 0 <= user_score <= 1:
-                alt_title = 'Safe!'
-                alt_description = 'This user is most likely safe!'
-            elif 2 <= user_score <= 3:
-                alt_title = 'Caution!'
-                alt_description = 'This user is potentially an alt!'
-            elif 4 <= user_score <= 5:
-                alt_title = 'Warning!'
-                alt_description = 'This user is most likely an alt!'
-
-            alt_embed = discord.Embed(
-                title=alt_title,
-                description=alt_description,
-                color=self.blue
-            )
-            alt_embed.set_author(
-                name=user,
-                icon_url=user.avatar_url
-            )
-            alt_embed.set_footer(text=alt_footer)
-            await ctx.send(embed=alt_embed)
 
     @commands.command()
     @commands.cooldown(1, 3, commands.BucketType.member)

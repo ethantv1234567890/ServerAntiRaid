@@ -4,11 +4,11 @@
 
 **NOTE: This is not recommended for beginners. Please learn the basics of Python before attempting to use this code!**
 
-Please understand that this bot is not perfect. Feel free to contribute anything you want here (no malicious code, please!) The best way to prevent raids is to enable *two-factor authentication* on your account and guild, adding a stricter verification level, enabling explicit content filter, and to give out administrative permissions with caution.
+This is a basic moderation bot that you can add on to to suit your own needs. Feel free to contribute anything you want here via a push request The best way to prevent raids is to enable *two-factor authentication* on your account and guild, adding a stricter verification level, enabling explicit content filter, and to give out administrative permissions with caution.
 
 ![AntiRaid Icon created by me!](AntiRaid.png)
 
-A tutorial and explanation regarding how to use the bot is on my [YouTube](https://www.youtube.com/playlist?list=PLt-Y7KdU42xD6dcy-mqL6c1Nj_XSbZgZ6)!
+A tutorial and explanation regarding how to use the bot is on my [YouTube](https://www.youtube.com/channel/UCDSHlAERINyHPbAkINm7OjQ)!
 
 Join the official [Discord](https://discord.com/invite/ka35JqY) server!
 
@@ -21,7 +21,7 @@ To get started, a few things must be installed.
 
 2. We will be installing [discord.py](https://pypi.org/project/discord.py/) for this project. Open *Command Prompt* on your computer and type in `pip install discord`.
 
-3. Clone the GitHub repository (either using the web URLs, GitHub Desktop, or downloading the zipped file).
+3. Clone the GitHub repository (either using the web URL, GitHub Desktop, or downloading the zipped file).
 
 ## Creating and Inviting the Bot
 
@@ -31,9 +31,11 @@ To get started, a few things must be installed.
 
 3. On the left side, press the `Bot` tab, then press `Add Bot`, then `Yes, do it!`. This will transform your application into a bot.
 
-4. Once your bot has appeared, copy your bot token by pressing `Copy`. You will use this later. This is how your program will login to your bot. **It is very important to keep this token safe, as it is your bot account credentials!**
+4. Scroll down, and under `Privileged Gateway Intents`, check the `Server Members Intents` option.
 
-5. Now, go to the left side and go to the `OAuth2` tab. Under the `Scopes` options, check `bot`. A section titled `Bot Permissions` will appear below. You will select your bot permissions here. We will using the `Administrator` permission, so please check that option. Now, under Scopes, you will see a link which you can invite your bot with. Copy this link and open it to invite your bot.
+5. Once your bot has appeared, copy your bot token by pressing `Copy`. You will use this later. This is how your program will login to your bot. **It is very important to keep this token safe, as it is your bot account credentials!**
+
+6. Now, go to the left side and go to the `OAuth2` tab. Under the `Scopes` options, check `bot`. A section titled `Bot Permissions` will appear below. You will select your bot permissions here. We will using the `Administrator` permission, so please check that option. Now, under Scopes, you will see a link which you can invite your bot with. Copy this link and open it to invite your bot.
 
 ---
 

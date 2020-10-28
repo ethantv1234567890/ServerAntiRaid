@@ -1,5 +1,6 @@
 """Logs Cog, detects deleted and edited messages."""
 
+from datetime import datetime
 import json
 
 import discord
@@ -11,6 +12,64 @@ class Logs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.blue = discord.Color.blue()
+
+    async def is_alt(self, user: discord.User):
+        """
+        Function that checks if a user is an alt.
+
+        Uses a points system from 0 to 5.
+        A score of 0-1 means the user is very unlikely to be an alt.
+        A score of 2-3 means the user may or may not be an alt.
+        A score of 4-5 means the user is very likely to be an alt.
+        """
+        score = 0
+
+        age = datetime.utcnow() - user.created_at
+
+        if age.days <= 7:  # created within a week ago
+            score += 3
+        if user.avatar is None:  # default avatar
+            score += 1
+        if not user.public_flags.all():
+            score += 1
+
+        return score
+
+    @commands.command()
+    @commands.cooldown(1, 1, commands.BucketType.member)
+    async def check(self, ctx, user: discord.User):
+        """
+        Checks if a user is an alt.
+
+        **Example:** `.check @ACPlayGames`
+        """
+        if user.bot:
+            await ctx.send('Please input a user, not a bot!')
+        else:
+            user_score = await self.is_alt(user)
+            alt_footer = 'Check if the user has Nitro or Connected Accounts!'
+
+            if 0 <= user_score <= 1:
+                alt_title = 'Safe!'
+                alt_description = 'This user is most likely safe!'
+            elif 2 <= user_score <= 3:
+                alt_title = 'Caution!'
+                alt_description = 'This user is potentially an alt!'
+            elif 4 <= user_score <= 5:
+                alt_title = 'Warning!'
+                alt_description = 'This user is most likely an alt!'
+
+            alt_embed = discord.Embed(
+                title=alt_title,
+                description=alt_description,
+                color=self.blue
+            )
+            alt_embed.set_author(
+                name=user,
+                icon_url=user.avatar_url
+            )
+            alt_embed.set_footer(text=alt_footer)
+            await ctx.send(embed=alt_embed)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
@@ -107,6 +166,53 @@ class Logs(commands.Cog):
         )
 
         await channel.send(embed=edit_embed)
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        """Automatically flag any suspicious members."""
+        # checks for the private_log channel
+        with open('./data/options.json', 'r') as options_file:
+            options = json.load(options_file)
+
+        if not member.guild:
+            return
+
+        guild_key = str(member.guild.id)
+
+        if guild_key not in options:
+            return
+
+        channel = options[guild_key]['private_log']
+
+        if not channel:
+            return
+
+        channel = member.guild.get_channel(channel)
+
+        # checks if the user is an alt
+        user_score = await self.is_alt(member)
+        if 3 <= user_score <= 5:
+            # creating & sending the embed message
+            check_embed = discord.Embed(
+                title='Potential Alt!',
+                color=self.blue
+            )
+            check_embed.set_author(
+                name=member,
+                icon_url=member.avatar_url
+            )
+            check_embed.add_field(
+                name='User in Question',
+                value=member.mention,
+                inline=False
+            )
+            check_embed.add_field(
+                name='Score (1 through 5)',
+                value=user_score,
+                inline=False
+            )
+
+            await channel.send(embed=check_embed)
 
 
 def setup(bot):

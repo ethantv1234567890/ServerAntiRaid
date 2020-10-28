@@ -18,7 +18,14 @@ async def get_prefix(bot_, message):
 
     return commands.when_mentioned_or(*prefixes)(bot_, message)
 
-bot = commands.Bot(command_prefix=get_prefix, case_insensitive=True)
+intents = discord.Intents.default()
+intents.members = True
+
+bot = commands.Bot(
+    command_prefix=get_prefix,
+    case_insensitive=True,
+    intents=intents
+)
 bot.remove_command('help')
 
 blue = discord.Color.blue()
@@ -128,8 +135,13 @@ async def help_(ctx, command=None):
     if not command:
         help_embed.add_field(
             name='Lockdown',
-            value='`lock` `unlock` `lockall` `unlockall` `check` `purge` ' +
+            value='`lock` `unlock` `lockall` `unlockall` `purge` ' +
             '`slowmode`',
+            inline=False
+        )
+        help_embed.add_field(
+            name='Logs',
+            value='`check`',
             inline=False
         )
         help_embed.add_field(
