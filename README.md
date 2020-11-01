@@ -4,7 +4,7 @@
 
 **NOTE: This is not recommended for beginners. Please learn the basics of Python before attempting to use this code!**
 
-This is a basic moderation bot that you can add on to to suit your own needs. Feel free to contribute anything you want here via a push request The best way to prevent raids is to enable *two-factor authentication* on your account and guild, adding a stricter verification level, enabling explicit content filter, and to give out administrative permissions with caution.
+This is a basic moderation bot that you can add on to to suit your own needs. Feel free to contribute anything you want here. The best way to prevent raids is to enable *two-factor authentication* on your account and guild, adding a stricter verification level, enabling explicit content filter, and to give out administrative permissions with caution.
 
 ![AntiRaid Icon created by me!](AntiRaid.png)
 
