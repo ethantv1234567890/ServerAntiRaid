@@ -14,7 +14,7 @@ async def get_prefix(bot_, message):
     if message.guild and str(message.guild.id) in options_dict:
         prefixes = options_dict[str(message.guild.id)]['prefix']
     else:
-        prefixes = '.'
+        prefixes = '/'
 
     return commands.when_mentioned_or(*prefixes)(bot_, message)
 
@@ -167,4 +167,4 @@ async def help_(ctx, command=None):
 
     await ctx.send(embed=help_embed)
 
-bot.run('TOKEN HERE')
+bot.run('NzI4MzAyMjc5NTQ3MTU4NTY4.Xv4aWg.tApgX9gHwnKwNz8xJ9kmn0YG9X0')
